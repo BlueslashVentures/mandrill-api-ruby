@@ -33,7 +33,7 @@ module Mandrill
             params[:key] = @apikey
             params = JSON.generate(params)
             r = @session.post(:path => "#{@path}#{url}.json", :headers => {'Content-Type' => 'application/json'}, :body => params)
-            p "Response: #{r}"
+            Rails.logger.debug "Headers: #{r.headers}"
             cast_error(r.body) if r.status != 200
             return JSON.parse(r.body)
         end
