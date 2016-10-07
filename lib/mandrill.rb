@@ -29,7 +29,14 @@ module Mandrill
             @apikey = apikey
         end
 
-
+        def call(url, params={})
+            params[:key] = @apikey
+            params = JSON.generate(params)
+            r = @session.post(:path => "#{@path}#{url}.json", :headers => {'Content-Type' => 'application/json'}, :body => params)
+            Rails.logger.debug "Headers: #{r.headers}"
+            cast_error(r.body) if r.status != 200
+            return JSON.parse(r.body)
+        end
 
         def read_configs()
             [File.expand_path('~/.mandrill.key'), '/etc/mandrill.key'].delete_if{ |p| not File.exist? p}.each do |path|
