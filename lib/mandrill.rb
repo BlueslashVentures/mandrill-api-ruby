@@ -34,7 +34,7 @@ module Mandrill
             params = JSON.generate(params)
             r = @session.post(:path => "#{@path}#{url}.json", :headers => {'Content-Type' => 'application/json'}, :body => params)
             Rails.logger.unknown "Headers: #{r.headers}"
-            cast_error(r.body) if r.status != 200
+            cast_error(r.body, r.headers) if r.status != 200
             return JSON.parse(r.body)
         end
 
@@ -49,7 +49,7 @@ module Mandrill
             return nil
         end
 
-        def cast_error(body)
+        def cast_error(body, headers)
 
             error_map = {
                 'ValidationError' => ValidationError,
@@ -85,8 +85,9 @@ module Mandrill
 
             begin
                 error_info = JSON.parse(body)
+                header_info = JSON.parse(headers)
                 if error_info['status'] != 'error' or not error_info['name']
-                    raise Error, "We received an unexpected error: #{body}"
+                    raise Error, "We received an unexpected error: #{body}. Headers: #{header_info}"
                 end
                 if error_map[error_info['name']]
                     raise error_map[error_info['name']], error_info['message']
@@ -94,7 +95,7 @@ module Mandrill
                     raise Error, error_info['message']
                 end
             rescue JSON::ParserError
-                raise Error, "We received an unexpected error: #{body}"
+                raise Error, "We received an unexpected error: #{body}. Headers: #{header_info}"
             end
         end
 
